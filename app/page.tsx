@@ -48,7 +48,7 @@ const Home : NextPage = () => {
     // Geometry
     const geometry = new THREE.PlaneGeometry(10, 10, 512, 512)
 
-    const colorObject : object = {}
+    const colorObject : any = {}
     colorObject.depthColor = "#b8e6ff"
     colorObject.surfaceColor = "#66c1f9"
 
