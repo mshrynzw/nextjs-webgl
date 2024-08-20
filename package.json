@@ -12,6 +12,7 @@
     "@react-three/drei": "^9.111.1",
     "@react-three/fiber": "^8.17.5",
     "@types/three": "^0.167.1",
+    "lil-gui": "^0.19.2",
     "next": "14.2.5",
     "raw-loader": "^4.0.2",
     "react": "^18",
