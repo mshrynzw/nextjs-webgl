@@ -26,13 +26,7 @@ const Home : NextPage = () => {
     }
 
     // Camera
-    const camera = new THREE.PerspectiveCamera(
-      75,
-      sizes.width / sizes.height,
-      0.1,
-      100
-    )
-    camera.position.set(0, 0.23, 0)
+
 
     // Controls
     const controls = new OrbitControls(camera, canvas)
@@ -46,108 +40,10 @@ const Home : NextPage = () => {
 
 
     // Geometry
-    const geometry = new THREE.PlaneGeometry(10, 10, 512, 512)
-
-    const colorObject : any = {}
-    colorObject.depthColor = "#b8e6ff"
-    colorObject.surfaceColor = "#66c1f9"
-
-    const material = new THREE.ShaderMaterial({
-      vertexShader : vertexShader,
-      fragmentShader : fragmentShader,
-      uniforms : {
-        uWaveLength : { value : 0.38 },
-        uFrequency : { value : new THREE.Vector2(6.6, 3.5) },
-        uTime : { value : 0 },
-        uWaveSpeed : { value : 0.75 },
-        uDepthColor : { value : new THREE.Color(colorObject.depthColor) },
-        uSurfaceColor : { value : new THREE.Color(colorObject.surfaceColor) },
-        uColorOffset : { value : 0.03 },
-        uColorMultiplier : { value : 9.0 },
-        uSmallWaveElevation : { value : 0.15 },
-        uSmallWaveFrequency : { value : 3.0 },
-        uSmallWaveSpeed : { value : 0.2 }
-      }
-    })
-
-    gui
-    .add(material.uniforms.uWaveLength, "value")
-    .min(0)
-    .max(1)
-    .step(0.001)
-    .name("uWaveLength")
-
-    gui
-    .add(material.uniforms.uFrequency.value, "x")
-    .min(0)
-    .max(10)
-    .step(0.001)
-    .name("uFrequencyX")
-
-    gui
-    .add(material.uniforms.uFrequency.value, "y")
-    .min(0)
-    .max(10)
-    .step(0.001)
-    .name("uFrequencyY")
-
-    gui
-    .add(material.uniforms.uWaveSpeed, "value")
-    .min(0)
-    .max(4)
-    .step(0.001)
-    .name("uWaveSpeed")
-
-    gui
-    .add(material.uniforms.uColorOffset, "value")
-    .min(0)
-    .max(1)
-    .step(0.001)
-    .name("uColorOffset")
-
-    gui
-    .add(material.uniforms.uColorMultiplier, "value")
-    .min(0)
-    .max(10)
-    .step(0.001)
-    .name("uColorMultiplier")
-
-    gui
-    .add(material.uniforms.uSmallWaveElevation, "value")
-    .min(0)
-    .max(1)
-    .step(0.001)
-    .name("uSmallWaveElevation")
-
-    gui
-    .add(material.uniforms.uSmallWaveFrequency, "value")
-    .min(0)
-    .max(30)
-    .step(0.001)
-    .name("uSmallWaveFrequency")
-
-    gui
-    .add(material.uniforms.uSmallWaveSpeed, "value")
-    .min(0)
-    .max(4)
-    .step(0.001)
-    .name("uSmallWaveSpeed")
-
-    gui.addColor(colorObject, "depthColor").onChange(() => {
-      material.uniforms.uDepthColor.value.set(colorObject.depthColor)
-    })
-
-    gui.addColor(colorObject, "surfaceColor").onChange(() => {
-      material.uniforms.uSurfaceColor.value.set(colorObject.surfaceColor)
-    })
 
     // Mesh
-    const mesh = new THREE.Mesh(geometry, material)
-    mesh.rotation.x = -Math.PI / 2
-    mesh.position.set(0, 0, 0)
-    scene.add(mesh)
 
-    // アニメーション
+    // Anima
     const clock = new THREE.Clock()
     const render = () => {
       const elapsedTime = clock.getElapsedTime()
@@ -164,7 +60,7 @@ const Home : NextPage = () => {
     }
     render()
 
-    // ブラウザのリサイズ操作
+    // Browser
     window.addEventListener("resize", () => {
       sizes.width = window.innerWidth
       sizes.height = window.innerHeight
