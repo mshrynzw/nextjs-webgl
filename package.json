@@ -14,6 +14,7 @@
     "@types/three": "^0.167.1",
     "lil-gui": "^0.19.2",
     "next": "14.2.5",
+    "perlin.js": "^1.0.0",
     "raw-loader": "^4.0.2",
     "react": "^18",
     "react-dom": "^18",
