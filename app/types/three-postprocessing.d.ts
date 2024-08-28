@@ -1,9 +1,11 @@
 declare module 'three/examples/jsm/postprocessing/EffectComposer' {
   import { WebGLRenderer } from 'three';
   import { Pass } from 'three/examples/jsm/postprocessing/Pass';
+
   export class EffectComposer {
     constructor(renderer: WebGLRenderer);
-    addPass(pass: Pass): void;
+    addPass(pass: Pass): void; // addPassメソッドを追加
+    // 必要に応じて他のメソッドやプロパティを追加
   }
 }
 
@@ -12,6 +14,7 @@ declare module 'three/examples/jsm/postprocessing/Pass' {
   export class Pass {
     constructor();
     render(renderer: any, writeBuffer: WebGLRenderTarget, readBuffer: WebGLRenderTarget, delta: number): void;
+    // 必要に応じて他のメソッドやプロパティを追加
   }
 }
 
