@@ -25,6 +25,7 @@ const Page : NextPage = () => {
     const scene = new THREE.Scene()
     const textureLoader = new THREE.TextureLoader()
     scene.background = textureLoader.load("/images/cube-background.jpg")
+    scene.fog = new THREE.Fog(0x000000, 30, 150)
 
     const sizes = {
       width : innerWidth,
