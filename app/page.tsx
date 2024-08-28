@@ -1,16 +1,15 @@
 "use client"
 import { NextPage } from "next"
 import { useEffect, useRef } from "react"
-import * as THREE from "three"
 import * as dat from "lil-gui"
-import { Vector3 } from "three"
+import * as THREE from "three"
 import Header from "@/components/Header"
 import Main from "@/components/Main"
 
 // tslint:disable-next-line:no-var-requires
 const Perlin = require("perlin.js")
 
-const Page : NextPage = () => {
+const Rainbow : NextPage = () => {
   const canvasRef = useRef<HTMLElement | null>(null)
 
   useEffect(() => {
@@ -22,13 +21,6 @@ const Page : NextPage = () => {
     gui.show(false)
 
     const scene = new THREE.Scene()
-    scene.fog = new THREE.Fog(0x000000, 30, 150)
-
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.7)
-    scene.add(ambientLight)
-    const pointLight = new THREE.PointLight(0xebf2ff, 500, 100)
-    scene.add(pointLight)
-
     const sizes = {
       width : innerWidth,
       height : innerHeight
@@ -36,92 +28,102 @@ const Page : NextPage = () => {
     const camera = new THREE.PerspectiveCamera(
       45,
       sizes.width / sizes.height,
-      0.1,
-      150
+      0.001,
+      1000
     )
-
+    // camera.position.x +=1000
     const renderer = new THREE.WebGLRenderer({
       canvas : canvas
     })
     renderer.setSize(sizes.width, sizes.height)
     renderer.setPixelRatio(window.devicePixelRatio)
 
-    let pointsArray = [
-      [68.5, 185.5],
-      [1, 262.5],
-      [270.9, 281.9],
-      [345.5, 212.8],
-      [178, 155.7],
-      [240.3, 72.3],
-      [153.4, 0.6],
-      [52.6, 53.3],
-      [68.5, 185.5]
-    ]
+    // ボックスジオメトリー
+    let lineArrTop = []
+    let lineArrBottom = []
+    const lineNum = 250
+    const lineLength = 15
+    const segmentNum = 100
+    const amplitude = 2.5
 
-    let points : Vector3[] = []
-    for (let i = 0; i < pointsArray.length; i++) {
-      const x = pointsArray[i][0]
-      const y = Math.random() * 100
-      const z = pointsArray[i][1]
-      points.push(new THREE.Vector3(x, y, z))
-    }
-    const path = new THREE.CatmullRomCurve3(points)
-    path.closed = true
+    for (let i = 0; i < lineNum; i++) {
+      const pointsTop = []
+      const pointsBottom = []
 
-    const tubeDetail = 1000
-    const circlesDetail = 8
-    const radius = 8
-    const frames = path.computeFrenetFrames(tubeDetail, true)
+      for (let j = 0; j <= segmentNum; j++) {
+        const x = ((lineLength / segmentNum) * j) - lineLength / 2
+        const y = 0
+        const z = i * 0.3 - ((lineNum * 0.3) / 2)
 
-    for (let i = 0; i < tubeDetail; i++) {
-      const normal = frames.normals[i]
-      const binormal = frames.binormals[i]
-      const index = i / tubeDetail
-
-      const p = path.getPointAt(index)
-      const circle = new THREE.BufferGeometry()
-
-      const positions : number[] = []
-      for (let j = 0; j <= circlesDetail; j++) {
-        // const position = p.clone()
-        let angle = (j / circlesDetail) * Math.PI * 2
-        angle += Perlin.perlin2(index * 10, 0)
-        const sin = Math.sin(angle)
-        const cos = -Math.cos(angle)
-
-        const normalPoint = new THREE.Vector3(0, 0, 0)
-        normalPoint.x = (cos * normal.x + sin * binormal.x)
-        normalPoint.y = (cos * normal.y + sin * binormal.y)
-        normalPoint.z = (cos * normal.z + sin * binormal.z)
-
-        normalPoint.multiplyScalar(radius)
-        positions.push(normalPoint.x, normalPoint.y, normalPoint.z)
+        const p = new THREE.Vector3(x, y, z)
+        pointsTop.push(p)
+        pointsBottom.push(p)
       }
-      circle.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3))
 
-      const material = new THREE.LineBasicMaterial({
-        color : new THREE.Color("hsl(" + (Perlin.perlin2(index * 10, 0) * 60 + 300) + ",50%,50%)")
-      })
+      const geometryTop = new THREE.BufferGeometry().setFromPoints(pointsTop)
+      const geometryBottom = new THREE.BufferGeometry().setFromPoints(pointsBottom)
 
-      const line = new THREE.Line(circle, material)
-      line.position.set(p.x, p.y, p.z)
-      scene.add(line)
+      const material = new THREE.LineBasicMaterial({ color : 0xffffff })
+
+      const lineTop = new THREE.Line(geometryTop, material)
+      lineArrTop[i] = lineTop
+      scene.add(lineArrTop[i])
+
+      const lineBottom = new THREE.Line(geometryBottom, material)
+      lineBottom.position.y += 5
+      lineArrBottom[i] = lineBottom
+      scene.add(lineArrBottom[i])
     }
 
-    let percentage = 0
+    // ライト
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.7)
+    scene.add(ambientLight)
+    const pointLight = new THREE.PointLight(0xffffff, 0.8)
+    pointLight.position.set(0, -1, 5)
+    scene.add(pointLight)
+
     const render = () => {
-      percentage += 0.001
-      const p1 = path.getPointAt(percentage % 1)
-      const p2 = path.getPointAt((percentage + 0.005) % 1)
-      camera.position.set(p1.x, p1.y, p1.z)
-      camera.lookAt(p2)
-      pointLight.position.set(p2.x, p2.y, p2.z)
+      camera.position.set(5, 0, 5) // カメラの位置を設定（例: z軸方向に5の位置）
+      camera.lookAt(0, 0, -5) // カメラが原点を向くように設定
+
+      for (let i = 0; i < lineNum; i++) {
+        const lineTop = lineArrTop[i]
+        const lineBottom = lineArrBottom[i]
+        const positionsTop = lineTop.geometry.attributes.position.array
+        const positionsBottom = lineBottom.geometry.attributes.position.array
+        const time = Date.now() / 4000
+
+        for (let j = 0; j <= segmentNum; j++) {
+          const x = ((lineLength / segmentNum) * j) - lineLength / 2
+          const px = j / (50 + i)
+          const py = i / 50 + time
+          const y = amplitude * Perlin.perlin2(px, py) - 2
+          const z = i * 0.3 - ((lineNum * 0.3) / 2) - 7.5
+          positionsTop[j * 3] = x
+          positionsTop[j * 3 + 1] = y
+          positionsTop[j * 3 + 2] = z
+          positionsBottom[j * 3] = x
+          positionsBottom[j * 3 + 1] = y
+          positionsBottom[j * 3 + 2] = z
+        }
+
+        const h = Math.round((i / lineNum) * 360)
+        const s = 100
+        const l = Math.round((i / lineNum) * 100)
+        const color = new THREE.Color(`hsl(${h},${s}%,${l}%)`)
+
+        lineTop.material.color = color
+        lineBottom.material.color = color
+        lineTop.geometry.attributes.position.needsUpdate = true
+        lineBottom.geometry.attributes.position.needsUpdate = true
+      }
 
       window.requestAnimationFrame(render)
       renderer.render(scene, camera)
     }
     render()
 
+    // ブラウザのリサイズ操作
     window.addEventListener("resize", () => {
       sizes.width = window.innerWidth
       sizes.height = window.innerHeight
@@ -143,4 +145,4 @@ const Page : NextPage = () => {
   )
 }
 
-export default Page
+export default Rainbow
