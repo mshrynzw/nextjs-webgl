@@ -5,22 +5,21 @@ import * as THREE from "three"
 import * as dat from "lil-gui"
 import vertexShader from "@/app/cube/shaders/vertexShader.glsl"
 import fragmentShader from "@/app/cube/shaders/fragmentShader.glsl"
-import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer.js"
+import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer"
 import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass"
 import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass"
 import Header from "@/components/Header"
 import Main from "@/components/Main"
 
-const Page = () => {
-  const canvasRef = useRef(null)
+const Page : NextPage = () => {
+  const canvasRef = useRef<HTMLElement | null>(null)
 
   useEffect(() => {
-    const canvas = document.getElementById("canvas")
-
+    const canvas = document.getElementById("canvas") as HTMLElement
     if (!canvas) return
     canvasRef.current = canvas
 
-    const gui = new dat.GUI({ width: 300 })
+    const gui = new dat.GUI({ width : 300 })
     gui.show(false)
 
     const scene = new THREE.Scene()
@@ -28,8 +27,8 @@ const Page = () => {
     scene.background = textureLoader.load("/images/cube-background.jpg")
 
     const sizes = {
-      width: innerWidth,
-      height: innerHeight
+      width : innerWidth,
+      height : innerHeight
     }
 
     // Camera
@@ -42,7 +41,7 @@ const Page = () => {
     camera.position.setZ(0)
 
     const renderer = new THREE.WebGLRenderer({
-      canvas: canvas
+      canvas : canvas
     })
     renderer.setSize(sizes.width, sizes.height)
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
@@ -57,7 +56,7 @@ const Page = () => {
     const cubeGeometry = new THREE.BoxGeometry(2, 2, 2)
 
     const loader = new THREE.CubeTextureLoader()
-    const environmentMapTexture = loader.load([
+    const cubeTexture = loader.load([
       "/textures/glass.jpg",
       "/textures/glass.jpg",
       "/textures/glass.jpg",
@@ -67,24 +66,24 @@ const Page = () => {
     ])
 
     const cubeMaterial = new THREE.ShaderMaterial({
-      vertexShader: vertexShader,
-      fragmentShader: fragmentShader,
-      transparent: true, // 透明を有効にする
-      uniforms: {
-        uEnvMap: { value: environmentMapTexture },
-        uTransparentColor: { value: 0.9 }
+      vertexShader : vertexShader,
+      fragmentShader : fragmentShader,
+      transparent : true, // 透明を有効にする
+      uniforms : {
+        uTexture : { value : cubeTexture },
+        uTransparentColor : { value : 0.9 }
       }
     })
 
     gui
-      .add(cubeMaterial.uniforms.uTransparentColor, "value")
-      .min(0)
-      .max(1)
-      .step(0.001)
-      .name("Transparent Color")
+    .add(cubeMaterial.uniforms.uTransparentColor, "value")
+    .min(0)
+    .max(1)
+    .step(0.001)
+    .name("Transparent Color")
 
     // エッジ
-    const edgeMaterial = new THREE.LineBasicMaterial({ color: 0x5fb7dd, linewidth: 2 })
+    const edgeMaterial = new THREE.LineBasicMaterial({ color : 0x5fb7dd, linewidth : 2 })
 
     gui.addColor(edgeMaterial, "color").name(" Cube Color")
 
@@ -96,11 +95,11 @@ const Page = () => {
       [-1.5, 1.5, 0]
     ]
     const distance = 5
-    const cubes = []
-    const edges = []
+    const cubes : THREE.Mesh[] = []
+    const edges : THREE.LineSegments[] = []
 
     // 初期の立方体を配置
-    const createCubes = (layer) => {
+    const createCubes = (layer : number) => {
       positions.forEach(pos => {
         const cube = new THREE.Mesh(cubeGeometry, cubeMaterial)
         cube.position.set(pos[0], pos[1], -layer * distance)
