@@ -3,9 +3,13 @@ import { NextPage } from "next"
 import { useEffect, useRef } from "react"
 import * as THREE from "three"
 import * as dat from "lil-gui"
-import { OrbitControls } from "three-stdlib"
+import vertexShader from "@/app/cube/shaders/vertexShader.glsl"
+import fragmentShader from "@/app/cube/shaders/fragmentShader.glsl"
+import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer"
+import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass"
+import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass"
 
-const Home : NextPage = () => {
+const Page : NextPage = () => {
   const canvasRef = useRef<HTMLElement | null>(null)
 
   useEffect(() => {
@@ -17,6 +21,8 @@ const Home : NextPage = () => {
     gui.show(true)
 
     const scene = new THREE.Scene()
+    const textureLoader = new THREE.TextureLoader()
+    scene.background = textureLoader.load("/images/cube-background.jpg")
 
     const sizes = {
       width : innerWidth,
@@ -32,46 +38,55 @@ const Home : NextPage = () => {
     )
     camera.position.setZ(0)
 
-    // Controls
-    // const controls = new OrbitControls(camera, canvas)
-    // controls.enableDamping = true
-
     const renderer = new THREE.WebGLRenderer({
       canvas : canvas
     })
     renderer.setSize(sizes.width, sizes.height)
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 
+    const composer = new EffectComposer(renderer)
+    const renderPass = new RenderPass(scene, camera)
+    composer.addPass(renderPass)
+
+    // ぼかし効果を追加
+    const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.0, 5.0, 0.85)
+    composer.addPass(bloomPass)
+
     // Geometry
     const cubeGeometry = new THREE.BoxGeometry(2, 2, 2)
 
-    const materialParams = {
-      metalness : 1.0,
-      roughness : 0.1
-    }
+    const loader = new THREE.CubeTextureLoader()
+    const environmentMapTexture = loader.load([
+      "/textures/glass.jpg",
+      "/textures/glass.jpg",
+      "/textures/glass.jpg",
+      "/textures/glass.jpg",
+      "/textures/glass.jpg",
+      "/textures/glass.jpg"
+    ])
 
-    // 立方体
-    const cubeMaterial = new THREE.MeshStandardMaterial({
-      color : 0x177bd9,
-      metalness : materialParams.metalness,
-      roughness : materialParams.roughness
+    const cubeMaterial = new THREE.ShaderMaterial({
+      vertexShader : vertexShader,
+      fragmentShader : fragmentShader,
+      transparent : true, // 透明を有効にする
+      uniforms : {
+        uEnvMap : { value : environmentMapTexture },
+        uTransparentColor : { value : 0.9 }
+      }
     })
 
-    gui.addColor(cubeMaterial, "color").name(" Cube Color")
-
-    gui.add(materialParams, "metalness", 0, 1).onChange(value => {
-      cubeMaterial.metalness = value
-    }).name("Cube Metalness")
-
-    gui.add(materialParams, "roughness", 0, 1).onChange(value => {
-      cubeMaterial.roughness = value
-    }).name("Cube Roughness")
+    gui
+    .add(cubeMaterial.uniforms.uTransparentColor, "value")
+    .min(0)
+    .max(1)
+    .step(0.001)
+    .name("Transparent Color")
 
     // エッジ
     const edgeMaterial = new THREE.LineBasicMaterial({ color : 0x5fb7dd, linewidth : 2 })
 
     gui.addColor(edgeMaterial, "color").name(" Cube Color")
-    
+
     // 立方体の配置
     const positions = [
       [1.5, 1.5, 0],
@@ -81,6 +96,7 @@ const Home : NextPage = () => {
     ]
     const distance = 5
     const cubes : THREE.Mesh[] = []
+    const edges : THREE.LineSegments[] = []
 
     // 初期の立方体を配置
     const createCubes = (layer : number) => {
@@ -92,17 +108,13 @@ const Home : NextPage = () => {
         cubes.push(cube)
 
         // エッジの作成
-        const edges = new THREE.EdgesGeometry(cubeGeometry)
-        const edgeLines = new THREE.LineSegments(edges, edgeMaterial)
-        edgeLines.position.set(pos[0], pos[1], -layer * distance)
-        scene.add(edgeLines)
+        const edgeGeometry = new THREE.EdgesGeometry(cubeGeometry)
+        const edge = new THREE.LineSegments(edgeGeometry, edgeMaterial)
+        edge.position.set(pos[0], pos[1], -layer * distance)
+        scene.add(edge)
+        edges.push(edge)
       })
     }
-
-    // 光源を作成
-    const pointLight = new THREE.PointLight(0xffffff, 10000, 1000)
-    gui.add(pointLight, "intensity", 0, 10000, 1.0).name("Point Light Intensity")
-    scene.add(pointLight)
 
     // Animation
     let cameraZ = 0
@@ -110,7 +122,6 @@ const Home : NextPage = () => {
     const render = () => {
       cameraZ -= 0.05
       camera.position.z = cameraZ
-      pointLight.position.z = cameraZ - 1
 
       if (cubes.length < 100) {
         layer += 1
@@ -118,13 +129,22 @@ const Home : NextPage = () => {
       }
 
       if (cubes.length > 0 && cubes[0].position.z > camera.position.z) {
-        const removedCube = cubes.shift() // 最初の立方体を削除
+        const removedCube = cubes.shift()
         if (removedCube) {
-          scene.remove(removedCube) // シーンから削除
+          scene.remove(removedCube)
         }
       }
+
+      if (edges.length > 0 && edges[0].position.z > camera.position.z) {
+        const removedEdge = edges.shift()
+        if (removedEdge) {
+          scene.remove(removedEdge)
+        }
+      }
+
       window.requestAnimationFrame(render)
       renderer.render(scene, camera)
+      composer.render()
     }
     render()
 
@@ -138,13 +158,15 @@ const Home : NextPage = () => {
 
       renderer.setSize(sizes.width, sizes.height)
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+
+      composer.setSize(sizes.width, sizes.height)
     })
   }, [])
 
   return (
     <>
       <canvas id="canvas"></canvas>
-      <header>
+      <header className="shadow-2xl m-8 rounded-lg">
         <h3 className="logo">Shader.com</h3>
         <ul>
           <li><a href="#">Home</a></li>
@@ -153,7 +175,7 @@ const Home : NextPage = () => {
         </ul>
       </header>
 
-      <main>
+      <main className="shadow-2xl p-8 rounded-lg">
         <h1>Dive Into Deep</h1>
         <p>Going deeper into Three.js...</p>
       </main>
@@ -161,4 +183,4 @@ const Home : NextPage = () => {
   )
 }
 
-export default Home
+export default Page
