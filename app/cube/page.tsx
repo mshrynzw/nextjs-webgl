@@ -5,9 +5,9 @@ import * as THREE from "three"
 import * as dat from "lil-gui"
 import vertexShader from "@/app/cube/shaders/vertexShader.glsl"
 import fragmentShader from "@/app/cube/shaders/fragmentShader.glsl"
-import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer"
-import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass"
-import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass"
+// import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer"
+// import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass"
+// import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass"
 import Header from "@/components/Header"
 import Main from "@/components/Main"
 
@@ -46,11 +46,11 @@ const Page : NextPage = () => {
     renderer.setSize(sizes.width, sizes.height)
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 
-    const composer = new EffectComposer(renderer)
-    const renderPass = new RenderPass(scene, camera)
-    composer.addPass(renderPass)
-    const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.0, 5.0, 0.85)
-    composer.addPass(bloomPass)
+    // const composer = new EffectComposer(renderer)
+    // const renderPass = new RenderPass(scene, camera)
+    // composer.addPass(renderPass)
+    // const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.0, 5.0, 0.85)
+    // composer.addPass(bloomPass)
 
     // Geometry
     const cubeGeometry = new THREE.BoxGeometry(2, 2, 2)
@@ -71,7 +71,7 @@ const Page : NextPage = () => {
       transparent : true, // 透明を有効にする
       uniforms : {
         uTexture : { value : cubeTexture },
-        uTransparentColor : { value : 0.9 }
+        uTransparentColor : { value : 0.5 }
       }
     })
 
@@ -144,7 +144,7 @@ const Page : NextPage = () => {
 
       window.requestAnimationFrame(render)
       renderer.render(scene, camera)
-      composer.render()
+      // composer.render()
     }
     render()
 
@@ -159,7 +159,7 @@ const Page : NextPage = () => {
       renderer.setSize(sizes.width, sizes.height)
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 
-      composer.setSize(sizes.width, sizes.height)
+      // composer.setSize(sizes.width, sizes.height)
     })
   }, [])
 
