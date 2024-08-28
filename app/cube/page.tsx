@@ -8,6 +8,8 @@ import fragmentShader from "@/app/cube/shaders/fragmentShader.glsl"
 import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer"
 import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass"
 import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass"
+import Header from "@/components/Header"
+import Main from "@/components/Main"
 
 const Page : NextPage = () => {
   const canvasRef = useRef<HTMLElement | null>(null)
@@ -166,19 +168,8 @@ const Page : NextPage = () => {
   return (
     <>
       <canvas id="canvas"></canvas>
-      <header className="shadow-2xl m-8 rounded-lg">
-        <h3 className="logo">Shader.com</h3>
-        <ul>
-          <li><a href="#">Home</a></li>
-          <li><a href="#">Blog</a></li>
-          <li><a href="#">Contact</a></li>
-        </ul>
-      </header>
-
-      <main className="shadow-2xl p-8 rounded-lg">
-        <h1>Dive Into Deep</h1>
-        <p>Going deeper into Three.js...</p>
-      </main>
+      <Header className="m-8 rounded-lg"/>
+      <Main className="shadow-2xl p-8 rounded-lg"/>
     </>
   )
 }
