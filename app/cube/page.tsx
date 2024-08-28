@@ -18,7 +18,7 @@ const Page : NextPage = () => {
     canvasRef.current = canvas
 
     const gui = new dat.GUI({ width : 300 })
-    gui.show(true)
+    gui.show(false)
 
     const scene = new THREE.Scene()
     const textureLoader = new THREE.TextureLoader()
