@@ -12,6 +12,7 @@ const Header : React.FC<HeaderProps> = ({ className }) => {
       <ul>
         <li><Link href="/">Home</Link></li>
         <li><Link href="/cube">Cube</Link></li>
+        <li><Link href="/rainbow">Rainbow</Link></li>
         <li><Link href="/wave">Wave</Link></li>
       </ul>
     </header>

@@ -3,11 +3,12 @@ import { NextPage } from "next"
 import { useEffect, useRef } from "react"
 import * as THREE from "three"
 import * as dat from "lil-gui"
-import { OrbitControls } from "three-stdlib"
-import vertexShader from "@/app/shaders/vertexShader.glsl"
-import fragmentShader from "@/app/shaders/fragmentShader.glsl"
+import { Vector3 } from "three"
 import Header from "@/components/Header"
 import Main from "@/components/Main"
+
+// tslint:disable-next-line:no-var-requires
+const Perlin = require("perlin.js")
 
 const Page : NextPage = () => {
   const canvasRef = useRef<HTMLElement | null>(null)
@@ -21,153 +22,106 @@ const Page : NextPage = () => {
     gui.show(false)
 
     const scene = new THREE.Scene()
+    scene.fog = new THREE.Fog(0x000000, 30, 150)
+
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.7)
+    scene.add(ambientLight)
+    const pointLight = new THREE.PointLight(0xebf2ff, 500, 100)
+    scene.add(pointLight)
 
     const sizes = {
       width : innerWidth,
       height : innerHeight
     }
-
-    // Camera
     const camera = new THREE.PerspectiveCamera(
-      75,
+      45,
       sizes.width / sizes.height,
       0.1,
-      100
+      150
     )
-    camera.position.set(0, 0.23, 0)
-
-
-    // Controls
-    const controls = new OrbitControls(camera, canvas)
-    controls.enableDamping = true
 
     const renderer = new THREE.WebGLRenderer({
       canvas : canvas
     })
     renderer.setSize(sizes.width, sizes.height)
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+    renderer.setPixelRatio(window.devicePixelRatio)
 
+    let pointsArray = [
+      [68.5, 185.5],
+      [1, 262.5],
+      [270.9, 281.9],
+      [345.5, 212.8],
+      [178, 155.7],
+      [240.3, 72.3],
+      [153.4, 0.6],
+      [52.6, 53.3],
+      [68.5, 185.5]
+    ]
 
-    // Geometry
-    const geometry = new THREE.PlaneGeometry(10, 10, 512, 512)
+    let points : Vector3[] = []
+    for (let i = 0; i < pointsArray.length; i++) {
+      const x = pointsArray[i][0]
+      const y = Math.random() * 100
+      const z = pointsArray[i][1]
+      points.push(new THREE.Vector3(x, y, z))
+    }
+    const path = new THREE.CatmullRomCurve3(points)
+    path.closed = true
 
-    const colorObject : any = {}
-    colorObject.depthColor = "#b8e6ff"
-    colorObject.surfaceColor = "#66c1f9"
+    const tubeDetail = 1000
+    const circlesDetail = 8
+    const radius = 8
+    const frames = path.computeFrenetFrames(tubeDetail, true)
 
-    const material = new THREE.ShaderMaterial({
-      vertexShader : vertexShader,
-      fragmentShader : fragmentShader,
-      uniforms : {
-        uWaveLength : { value : 0.38 },
-        uFrequency : { value : new THREE.Vector2(6.6, 3.5) },
-        uTime : { value : 0 },
-        uWaveSpeed : { value : 0.75 },
-        uDepthColor : { value : new THREE.Color(colorObject.depthColor) },
-        uSurfaceColor : { value : new THREE.Color(colorObject.surfaceColor) },
-        uColorOffset : { value : 0.03 },
-        uColorMultiplier : { value : 9.0 },
-        uSmallWaveElevation : { value : 0.15 },
-        uSmallWaveFrequency : { value : 3.0 },
-        uSmallWaveSpeed : { value : 0.2 }
+    for (let i = 0; i < tubeDetail; i++) {
+      const normal = frames.normals[i]
+      const binormal = frames.binormals[i]
+      const index = i / tubeDetail
+
+      const p = path.getPointAt(index)
+      const circle = new THREE.BufferGeometry()
+
+      const positions : number[] = []
+      for (let j = 0; j <= circlesDetail; j++) {
+        // const position = p.clone()
+        let angle = (j / circlesDetail) * Math.PI * 2
+        angle += Perlin.perlin2(index * 10, 0)
+        const sin = Math.sin(angle)
+        const cos = -Math.cos(angle)
+
+        const normalPoint = new THREE.Vector3(0, 0, 0)
+        normalPoint.x = (cos * normal.x + sin * binormal.x)
+        normalPoint.y = (cos * normal.y + sin * binormal.y)
+        normalPoint.z = (cos * normal.z + sin * binormal.z)
+
+        normalPoint.multiplyScalar(radius)
+        positions.push(normalPoint.x, normalPoint.y, normalPoint.z)
       }
-    })
+      circle.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3))
 
-    gui
-    .add(material.uniforms.uWaveLength, "value")
-    .min(0)
-    .max(1)
-    .step(0.001)
-    .name("uWaveLength")
+      const material = new THREE.LineBasicMaterial({
+        color : new THREE.Color("hsl(" + (Perlin.perlin2(index * 10, 0) * 60 + 300) + ",50%,50%)")
+      })
 
-    gui
-    .add(material.uniforms.uFrequency.value, "x")
-    .min(0)
-    .max(10)
-    .step(0.001)
-    .name("uFrequencyX")
+      const line = new THREE.Line(circle, material)
+      line.position.set(p.x, p.y, p.z)
+      scene.add(line)
+    }
 
-    gui
-    .add(material.uniforms.uFrequency.value, "y")
-    .min(0)
-    .max(10)
-    .step(0.001)
-    .name("uFrequencyY")
-
-    gui
-    .add(material.uniforms.uWaveSpeed, "value")
-    .min(0)
-    .max(4)
-    .step(0.001)
-    .name("uWaveSpeed")
-
-    gui
-    .add(material.uniforms.uColorOffset, "value")
-    .min(0)
-    .max(1)
-    .step(0.001)
-    .name("uColorOffset")
-
-    gui
-    .add(material.uniforms.uColorMultiplier, "value")
-    .min(0)
-    .max(10)
-    .step(0.001)
-    .name("uColorMultiplier")
-
-    gui
-    .add(material.uniforms.uSmallWaveElevation, "value")
-    .min(0)
-    .max(1)
-    .step(0.001)
-    .name("uSmallWaveElevation")
-
-    gui
-    .add(material.uniforms.uSmallWaveFrequency, "value")
-    .min(0)
-    .max(30)
-    .step(0.001)
-    .name("uSmallWaveFrequency")
-
-    gui
-    .add(material.uniforms.uSmallWaveSpeed, "value")
-    .min(0)
-    .max(4)
-    .step(0.001)
-    .name("uSmallWaveSpeed")
-
-    gui.addColor(colorObject, "depthColor").onChange(() => {
-      material.uniforms.uDepthColor.value.set(colorObject.depthColor)
-    })
-
-    gui.addColor(colorObject, "surfaceColor").onChange(() => {
-      material.uniforms.uSurfaceColor.value.set(colorObject.surfaceColor)
-    })
-
-    // Mesh
-    const mesh = new THREE.Mesh(geometry, material)
-    mesh.rotation.x = -Math.PI / 2
-    mesh.position.set(0, 0, 0)
-    scene.add(mesh)
-
-    // Anima
-    const clock = new THREE.Clock()
+    let percentage = 0
     const render = () => {
-      const elapsedTime = clock.getElapsedTime()
-      material.uniforms.uTime.value = elapsedTime
-      camera.position.x = Math.sin(elapsedTime * 0.2) * 2.0
-      camera.position.z = Math.cos(elapsedTime * 0.2) * 2.0
+      percentage += 0.001
+      const p1 = path.getPointAt(percentage % 1)
+      const p2 = path.getPointAt((percentage + 0.005) % 1)
+      camera.position.set(p1.x, p1.y, p1.z)
+      camera.lookAt(p2)
+      pointLight.position.set(p2.x, p2.y, p2.z)
 
-      camera.lookAt(Math.cos(elapsedTime), Math.sin(elapsedTime) * 0.5, Math.sin(elapsedTime) * 0.4)
-
-      scene.add(camera)
-      controls.update()
       window.requestAnimationFrame(render)
       renderer.render(scene, camera)
     }
     render()
 
-    // Browser
     window.addEventListener("resize", () => {
       sizes.width = window.innerWidth
       sizes.height = window.innerHeight
@@ -176,15 +130,15 @@ const Page : NextPage = () => {
       camera.updateProjectionMatrix()
 
       renderer.setSize(sizes.width, sizes.height)
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+      renderer.setPixelRatio(window.devicePixelRatio)
     })
   }, [])
 
   return (
     <>
       <canvas id="canvas"></canvas>
-      <Header className=""/>
-      <Main className=""/>
+      <Header className="m-8 rounded-lg"/>
+      <Main className="shadow-2xl p-8 rounded-lg"/>
     </>
   )
 }
