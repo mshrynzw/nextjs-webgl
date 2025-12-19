@@ -13,7 +13,7 @@
     "@react-three/fiber": "^8.17.5",
     "@types/three": "^0.167.2",
     "lil-gui": "^0.19.2",
-    "next": "14.2.5",
+    "next": "14.2.35",
     "perlin.js": "^1.0.0",
     "raw-loader": "^4.0.2",
     "react": "^18",
