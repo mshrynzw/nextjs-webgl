@@ -1,36 +1,114 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Next.js WebGL デモプロジェクト
 
-## Getting Started
+Three.jsとカスタムシェーダーを使用したWebGLデモのコレクションです。Next.js 14で構築されています。
 
-First, run the development server:
+## 概要
+
+このプロジェクトは、WebGLとGLSLシェーダーを使った様々なビジュアルエフェクトのデモを提供します。各デモは独立したページとして実装されており、カスタムシェーダーを使用した高度なグラフィック表現を体験できます。
+
+## デモ一覧
+
+- **ホームページ** (`/`) - パーリンノイズを使用した虹色の波線アニメーション
+- **Cube** (`/cube`) - カスタムシェーダーを使用したキューブのトンネルエフェクト
+- **Snow** (`/snow`) - パーティクルシステムを使用した雪の降るアニメーション
+- **Wave** (`/wave`) - カスタムシェーダーを使用した波のアニメーション
+- **Tunnel** (`/tunnel`) - トンネルエフェクト
+
+## 技術スタック
+
+- **フレームワーク**: Next.js 14
+- **3Dライブラリ**: Three.js
+- **言語**: TypeScript
+- **スタイリング**: Tailwind CSS
+- **シェーダー**: GLSL（カスタムシェーダー）
+- **デバッグツール**: lil-gui
+- **その他**: 
+  - @react-three/fiber
+  - @react-three/drei
+  - perlin.js（ノイズ生成）
+
+## セットアップ
+
+### 必要な環境
+
+- Node.js 18以上
+- npm、yarn、pnpm、またはbun
+
+### インストール
+
+```bash
+npm install
+# または
+yarn install
+# または
+pnpm install
+# または
+bun install
+```
+
+### 開発サーバーの起動
 
 ```bash
 npm run dev
-# or
+# または
 yarn dev
-# or
+# または
 pnpm dev
-# or
+# または
 bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+ブラウザで [http://localhost:3000](http://localhost:3000) を開いて結果を確認してください。
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## プロジェクト構造
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+```
+nextjs-webgl/
+├── app/
+│   ├── cube/          # キューブデモ
+│   │   ├── page.tsx
+│   │   └── shaders/   # GLSLシェーダーファイル
+│   ├── snow/          # 雪デモ
+│   │   ├── page.tsx
+│   │   └── shaders/
+│   ├── wave/          # 波デモ
+│   │   ├── page.tsx
+│   │   └── shaders/
+│   ├── tunnel/        # トンネルデモ
+│   │   └── page.tsx
+│   ├── shaders/       # 共通シェーダー
+│   └── page.tsx       # ホームページ（Rainbowデモ）
+├── components/         # Reactコンポーネント
+│   ├── Header.tsx
+│   └── Main.tsx
+├── public/
+│   ├── images/        # 画像リソース
+│   └── textures/      # テクスチャファイル
+└── package.json
+```
 
-## Learn More
+## 機能
 
-To learn more about Next.js, take a look at the following resources:
+- **カスタムシェーダー**: GLSLを使用した高度なビジュアルエフェクト
+- **パーティクルシステム**: 大量のパーティクルを使用したエフェクト（雪など）
+- **インタラクティブなデバッグ**: lil-guiを使用したリアルタイムパラメータ調整
+- **レスポンシブデザイン**: ウィンドウリサイズに対応
+- **パフォーマンス最適化**: デバイスピクセル比の最適化
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## ビルド
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+本番環境用のビルド:
 
-## Deploy on Vercel
+```bash
+npm run build
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+ビルド後の起動:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+```bash
+npm start
+```
+
+## ライセンス
+
+このプロジェクトは個人の学習・研究目的で作成されています。
