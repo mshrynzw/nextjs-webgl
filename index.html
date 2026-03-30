@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+
+<style>
+body{
+margin:0;
+overflow:hidden;
+background:black;
+}
+</style>
+
+<script type="importmap">
+{
+ "imports":{
+  "three":"https://unpkg.com/three@0.160.0/build/three.module.js",
+  "lil-gui":"https://cdn.jsdelivr.net/npm/lil-gui@0.19/+esm"
+ }
+}
+</script>
+</head>
+
+<body>
+
+<script type="module">
+
+import * as THREE from "three";
+import GUI from "lil-gui";
+
+const scene=new THREE.Scene();
+const camera=new THREE.Camera();
+
+const renderer=new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(window.innerWidth,window.innerHeight);
+document.body.appendChild(renderer.domElement);
+
+const geometry=new THREE.PlaneGeometry(2,2);
+
+const uniforms={
+resolution:{value:new THREE.Vector2(window.innerWidth,window.innerHeight)},
+mouse:{value:new THREE.Vector2(.5,.5)},
+lightPower:{value:2.0},
+cameraZ:{value:-2.0},
+reflectCount:{value:16.0}
+};
+
+const material=new THREE.ShaderMaterial({
+
+uniforms,
+
+vertexShader:`
+
+varying vec2 vUv;
+
+void main(){
+vUv=uv;
+gl_Position=vec4(position,1.0);
+}
+
+`,
+
+fragmentShader:`
+
+precision highp float;
+
+uniform vec2 resolution;
+uniform vec2 mouse;
+
+uniform float lightPower;
+uniform float cameraZ;
+uniform float reflectCount;
+
+varying vec2 vUv;
+
+#define MAX_STEPS 200
+#define MAX_DIST 50.0
+#define SURF_DIST 0.001
+
+float sdOctahedron(vec3 p,float s){
+p=abs(p);
+return (p.x+p.y+p.z-s)*0.57735027;
+}
+
+float wallDist(vec3 p){
+vec3 d=vec3(3.0)-abs(p);
+return min(min(d.x,d.y),d.z);
+}
+
+vec3 cubeNormal(vec3 p){
+
+vec3 a=abs(p);
+
+if(a.x>a.y && a.x>a.z) return vec3(sign(p.x),0.,0.);
+if(a.y>a.z) return vec3(0.,sign(p.y),0.);
+return vec3(0.,0.,sign(p.z));
+
+}
+
+vec3 octNormal(vec3 p){
+
+vec2 e=vec2(.001,0);
+
+float d=sdOctahedron(p,.8);
+
+vec3 n=d-vec3(
+sdOctahedron(p-e.xyy,.8),
+sdOctahedron(p-e.yxy,.8),
+sdOctahedron(p-e.yyx,.8)
+);
+
+return normalize(n);
+
+}
+
+float raymarch(vec3 ro,vec3 rd,out vec3 hit){
+
+float dist=0.;
+
+for(int i=0;i<MAX_STEPS;i++){
+
+vec3 p=ro+rd*dist;
+
+float d=sdOctahedron(p,.8);
+
+dist+=d;
+
+if(d<SURF_DIST||dist>MAX_DIST){
+hit=p;
+break;
+}
+
+}
+
+return dist;
+
+}
+
+void main(){
+
+vec2 uv=vUv*2.-1.;
+uv.x*=resolution.x/resolution.y;
+
+float mx=(mouse.x-.5)*1.2;
+float my=(mouse.y-.5)*1.2;
+
+vec3 ro=vec3(0.,0.,cameraZ);
+
+vec3 rd=normalize(vec3(
+uv.x+mx,
+uv.y+my,
+1.5
+));
+
+vec3 col=vec3(0.);
+
+for(int bounce=0;bounce<32;bounce++){
+
+if(float(bounce)>=reflectCount)break;
+
+vec3 hit;
+
+float d=raymarch(ro,rd,hit);
+
+if(d>MAX_DIST)break;
+
+float wall=wallDist(hit);
+
+if(wall<0.01){
+
+vec3 n=cubeNormal(hit);
+
+rd=reflect(rd,n);
+
+ro=hit+rd*0.02;
+
+continue;
+
+}
+
+vec3 n=octNormal(hit);
+
+vec3 light=normalize(vec3(1.,2.,-2.));
+
+float diff=max(dot(n,light),0.);
+
+col+=vec3(diff)*lightPower;
+
+break;
+
+}
+
+col+=0.02/length(uv);
+
+gl_FragColor=vec4(col,1.0);
+
+}
+
+`
+
+});
+
+const mesh=new THREE.Mesh(geometry,material);
+scene.add(mesh);
+
+const gui=new GUI();
+
+const params={
+light:2,
+camera:-2,
+infinite:16
+};
+
+gui.add(params,"light",0,6,.01).onChange(v=>{
+uniforms.lightPower.value=v;
+});
+
+gui.add(params,"camera",-10,10,.01).onChange(v=>{
+uniforms.cameraZ.value=v;
+});
+
+gui.add(params,"infinite",1,30,1).onChange(v=>{
+uniforms.reflectCount.value=v;
+});
+
+window.addEventListener("mousemove",e=>{
+uniforms.mouse.value.x=e.clientX/window.innerWidth;
+uniforms.mouse.value.y=e.clientY/window.innerHeight;
+});
+
+window.addEventListener("resize",()=>{
+renderer.setSize(window.innerWidth,window.innerHeight);
+uniforms.resolution.value.set(window.innerWidth,window.innerHeight);
+});
+
+function animate(){
+requestAnimationFrame(animate);
+renderer.render(scene,camera);
+}
+
+animate();
+
+</script>
+
+</body>
+</html>
