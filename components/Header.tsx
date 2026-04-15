@@ -16,6 +16,7 @@ const Header : React.FC<HeaderProps> = ({ className }) => {
         <li><Link href="/tunnel">Tunnel</Link></li>
         <li><Link href="/snow">Snow</Link></li>
         <li><Link href="/aurora">Aurora</Link></li>
+        <li><Link href="/silk">Silk</Link></li>
       </ul>
     </header>
   )
