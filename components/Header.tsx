@@ -18,6 +18,7 @@ const Header : React.FC<HeaderProps> = ({ className }) => {
         <li><Link href="/aurora">Aurora</Link></li>
         <li><Link href="/silk">Silk</Link></li>
         <li><Link href="/water">Water</Link></li>
+        <li><Link href="/smoke">Smoke</Link></li>
       </ul>
     </header>
   )
